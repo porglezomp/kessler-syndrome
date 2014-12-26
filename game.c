@@ -1,9 +1,10 @@
-#include "game_input.h"
 #include "vec2.h"
 #include "ship.h"
 
+#include "easyinput.h"
 #include "PiGL.h"
 #include "GLES/gl.h"
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -32,7 +33,9 @@ int main() {
     signal(SIGINT, handle_interrupt);
     atexit(cleanup);
     atexit(OGL_Quit);
-    setup_input();
+    // Setup the input handler using the default input device
+    // ("/dev/input/event1")
+    ei_setup(NULL);
 
     struct rocket ship = {
         .angle_force = 0.1,
@@ -56,12 +59,12 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         ship.input = v2zero, ship.damping = 0;
-        handle_input();
-        if (key_down(KEY_UP))    ship.input.y += 1;
-        if (key_down(KEY_DOWN))  ship.input.y -= 1;
-        if (key_down(KEY_LEFT))  ship.input.x -= 1;
-        if (key_down(KEY_RIGHT)) ship.input.x += 1;
-        if (key_down(KEY_S))     ship.damping = 1;
+        ei_poll_all();
+        if (ei_key_down(KEY_UP))    ship.input.y += 1;
+        if (ei_key_down(KEY_DOWN))  ship.input.y -= 1;
+        if (ei_key_down(KEY_LEFT))  ship.input.x -= 1;
+        if (ei_key_down(KEY_RIGHT)) ship.input.x += 1;
+        if (ei_key_down(KEY_S))     ship.damping = 1;
         input_physics(&ship);
         physics(&ship);
 
@@ -91,7 +94,7 @@ int main() {
         glPopMatrix();
 
         OGL_SwapBuffers();
-        if (key_down(KEY_ESC)) running = 0;
+        if (ei_key_down(KEY_ESC)) running = 0;
     }
 
     return EXIT_SUCCESS;

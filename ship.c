@@ -1,4 +1,3 @@
-#include "game_input.h"
 #include "vec2.h"
 #include "ship.h"
 
