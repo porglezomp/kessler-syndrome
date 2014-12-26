@@ -54,8 +54,9 @@ void input_physics(struct rocket *s) {
     // Linear thruster (can't fire backwards)
     if (s->main_fuel > 0 && s->input.y > 0) {
         s->main_fuel -= s->main_fuel_rate * s->input.y;
-        s->accel.x = sin(s->angle*M_PI/180) * s->input.y * s->thrust;
-        s->accel.y = cos(s->angle*M_PI/180) * s->input.y * s->thrust;
+        vec2 direction = v2angle(s->angle);
+        v2muli(&direction, s->input.y * s->thrust);
+        s->accel = direction;
     } else if (s->main_fuel < 0) s->main_fuel = 0;
 }
 
