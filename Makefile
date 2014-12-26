@@ -1,7 +1,7 @@
 LIBS = $(shell pkg-config PiGL --libs) -lm
 CFLAGS = $(shell pkg-config PiGL --cflags) --std=gnu99 -fgnu89-inline
-SRC = game.c game_input.c vec2.c
-OBJS = game.o game_input.o vec2.o
+SRC = game.c game_input.c vec2.c ship.c
+OBJS = game.o game_input.o vec2.o ship.o
 APP = Game.out
 
 $(APP): $(OBJS)
