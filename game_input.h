@@ -4,7 +4,6 @@
 #include <linux/input.h>
 
 void setup_input();
-void map_input(float *x, float *y);
 
 int get_key_event(struct input_event *ev);
 

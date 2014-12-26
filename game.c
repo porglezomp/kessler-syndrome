@@ -1,5 +1,7 @@
-#include "PiGL.h"
 #include "game_input.h"
+#include "vec2.h"
+
+#include "PiGL.h"
 #include "GLES/gl.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,14 +12,7 @@
 #include <linux/input.h>
 #include <math.h>
 
-void panic();
-void input();
-
-void panic() {
-    fflush(stdout);
-    fprintf(stderr, "%s.\n", strerror(errno));
-    exit(EXIT_FAILURE);
-}
+void physics_input();
 
 static volatile int running = 1;
 void handle_interrupt(int dummy) {
@@ -60,8 +55,8 @@ static float data[NUM_BODY*2 + NUM_THRUST*2*3 + 4] = {
 };
 
 struct rocket {
-    float accel_x, accel_y, vel_x, vel_y,
-          pos_x, pos_y, angle, angle_vel,
+    vec2 accel, vel, pos;
+    float angle, angle_vel,
           angle_force, thrust, max_rcs_fuel,
           max_main_fuel, rcs_fuel, main_fuel,
           rcs_fuel_rate, main_fuel_rate;
@@ -77,8 +72,8 @@ static struct rocket ship = {
     .max_rcs_fuel = 100,
     .rcs_fuel = 100,
     .rcs_fuel_rate = 0.02,
-    .max_main_fuel = 1000,
-    .main_fuel = 1000,
+    .max_main_fuel = 3000,
+    .main_fuel = 3000,
     .main_fuel_rate = 0.3,
 };
 
@@ -111,18 +106,18 @@ int main() {
         if (key_down(KEY_S))     ship.damping = 1;
 
         // Collide with the edges of the screen
-        if (ship.pos_x > asp)  ship.pos_x = asp;
-        if (ship.pos_x < -asp) ship.pos_x = -asp;
-        if (ship.pos_y > 1)    ship.pos_y = 1;
-        if (ship.pos_y < -1)   ship.pos_y = -1;
+        if (ship.pos.x > asp)  ship.pos.x = asp;
+        if (ship.pos.x < -asp) ship.pos.x = -asp;
+        if (ship.pos.y > 1)    ship.pos.y = 1;
+        if (ship.pos.y < -1)   ship.pos.y = -1;
 
-        glTranslatef(ship.pos_x, ship.pos_y, 0);
+        glTranslatef(ship.pos.x, ship.pos.y, 0);
         glScalef(0.05, 0.05, 0.05);
         glRotatef(-ship.angle, 0, 0, 1);
 
         glDrawArrays(GL_LINE_LOOP, 0, NUM_BODY);
         // Input also draws the thrust effects
-        input();
+        physics_input();
         glPopMatrix();
 
         glPushMatrix();
@@ -145,7 +140,7 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-void input() {
+void physics_input() {
     // Enable stabilization, fire opposite rotation
     // (0.5 because half as powerful as normal thrusters)
     if (ship.damping) input_x += ship.angle_vel < 0 ? .5 : -.5;
@@ -172,14 +167,12 @@ void input() {
             glDrawArrays(GL_LINE_STRIP, MAIN_THRUST_START, NUM_THRUST);
             ship.main_fuel -= ship.main_fuel_rate * input_y;
         }
-        ship.accel_x = sin(ship.angle*M_PI/180) * input_y * ship.thrust;
-        ship.accel_y = cos(ship.angle*M_PI/180) * input_y * ship.thrust;
+        ship.accel.x = sin(ship.angle*M_PI/180) * input_y * ship.thrust;
+        ship.accel.y = cos(ship.angle*M_PI/180) * input_y * ship.thrust;
     } else if (ship.main_fuel < 0) ship.main_fuel = 0;
 
     // Perform the physics
-    ship.vel_x += ship.accel_x;
-    ship.vel_y += ship.accel_y;
-    ship.pos_x += ship.vel_x;
-    ship.pos_y += ship.vel_y;
+    v2inc(&ship.vel, &ship.accel);
+    v2inc(&ship.pos, &ship.vel);
     ship.angle += ship.angle_vel;
 }

@@ -10,9 +10,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#define PRESS   0
-#define RELEASE 1
-
 static const char *dev = "/dev/input/event1";
 
 static ssize_t n;
@@ -20,12 +17,6 @@ static int fd;
 
 static fd_set writefds;
 static struct timeval timeout;
-
-void map_input(float *x, float *y) {
-    float x0 = *x, y0 = *y;
-    *x *= sqrt(1 - y0*y0/2);
-    *y *= sqrt(1 - x0*x0/2);
-}
 
 void setup_input() {
     fd = open(dev, O_RDONLY);
@@ -43,19 +34,14 @@ int get_key_event(struct input_event *ev) {
     FD_SET(fd, &writefds);
 
     int result = select(fd+1, &writefds, NULL, NULL, &timeout);
-    if (result == -1) {
-        // Error!
-        panic();
-    } else if (result) {
+    // Error!
+    if (result == -1) return 0;
+    else if (result) {
         n = read(fd, ev, sizeof *ev);
-        if (n == (ssize_t)-1) {
-            // If it's got a wrong size of some other reason, we need to quit
-            panic();
+        // If it's got a wrong size of some other reason, we need to quit
+        if (n == (ssize_t)-1) return 0;
         // If the event struct is the wrong size, we need to quit
-        } else if (n != sizeof *ev) {
-            errno = EIO;
-            panic();
-        }
+        else if (n != sizeof *ev) return 0;
         return 1;
     }
     // There are no keypresses ready to be read
