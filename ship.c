@@ -1,5 +1,7 @@
 #include "vec2.h"
 #include "ship.h"
+#include "particles.h"
+#include "space.h"
 
 #include "PiGL.h"
 #include "GLES/gl.h"
@@ -77,8 +79,29 @@ void draw_rocket(const struct rocket *s) {
     // Maneuvering thrusters
     if (s->rcs_fuel > 0 && s->input.x != 0) {
         // Draw the RCS thrusters if the rotation controls are enabled
-        if (s->input.x > 0) glDrawArrays(GL_LINE_STRIP, LEFT_THRUST_START, NUM_THRUST);
-        else glDrawArrays(GL_LINE_STRIP, RIGHT_THRUST_START, NUM_THRUST);
+        vec2 forward = v2angle(s->angle);
+        v2muli(&forward, 0.1);
+        vec2 point = v2add(&s->pos, &forward);
+        float angle_offset = 0;
+#define SPREAD 5
+        if (s->input.x > 0) {
+            angle_offset = -90 - SPREAD;
+//            glDrawArrays(GL_LINE_STRIP, LEFT_THRUST_START, NUM_THRUST);
+        } else {
+            angle_offset = 90 - SPREAD;
+//            glDrawArrays(GL_LINE_STRIP, RIGHT_THRUST_START, NUM_THRUST);
+        }
+#define NUM_PARTICLES 16
+        float angle = s->angle + angle_offset;
+        for (int i = 0; i < NUM_PARTICLES; i++) {
+            vec2 dir = v2angle(angle + randf() * SPREAD);
+            v2muli(&dir, 0.01);
+            v2inc(&dir, &s->vel);
+            vec2 modifier = v2angle(randf()*180);
+            v2muli(&modifier, 0.005);
+            vec2 point2 = v2add(&point, &modifier);
+            emit(s->rcs_particles, &point2, &dir);
+        }
     }
 
     // Linear thruster

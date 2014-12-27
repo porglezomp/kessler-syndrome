@@ -37,35 +37,52 @@ void emit(struct particle_system *ps, const vec2 *pos, const vec2 *vel) {
     if (ps->count < ps->nparticles) {
         ps->count += 1;
     } else {
-        ps->offset = ++ps->offset % ps->nparticles;
+        ps->offset = (ps->offset + 1) % ps->nparticles;
     }
-    struct particle p = {*pos, *vel};
+    struct particle p = {.pos=*pos, .vel=*vel, .life=.5,
+                         .g=1, .b=1, .a=1, .radius=1};
     *nth_particle(ps, ps->count) = p;
 }
 
+#define MAX_SHORT (1<<16)
 void update_particles(struct particle_system *ps) {
+    int to_remove = 0;
     for (int i = 0; i < ps->count; i++) {
         struct particle *nth = nth_particle(ps, i);
         v2inc(&nth->pos, &nth->vel);
         loop(&nth->pos);
+        nth->life -= 0.01;
+        nth->g = nth->life; nth->b = nth->life;
+        if (nth->life <= 0) to_remove += 1;
+        nth->radius += 0.1;
     }
+    for (int i = 0; i < to_remove; i++) kill_particle(ps);
 }
 
 void draw_particles(struct particle_system *ps) {
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_FLOAT, sizeof(struct particle), ps->particles);
+    glVertexPointer(2, GL_FLOAT, sizeof(struct particle), &(ps->particles[0].pos));
+    glEnableClientState(GL_POINT_SIZE_ARRAY_OES);
+    glPointSizePointerOES(GL_FLOAT, sizeof(struct particle), &(ps->particles[0].radius));
+    glEnableClientState(GL_COLOR_ARRAY);
+    glColorPointer(4, GL_FLOAT, sizeof(struct particle), &(ps->particles[0].life));
+
     int drawcount = ps->count;
     if (ps->offset + ps->count >= ps->nparticles) {
         drawcount = ps->nparticles - ps->offset;
         glDrawArrays(GL_POINTS, 0, ps->count - drawcount);
     }
+
     glDrawArrays(GL_POINTS, ps->offset, drawcount);
+
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_POINT_SIZE_ARRAY_OES);
 }
 
 void kill_particle(struct particle_system *ps) {
     if (ps->count > 0) {
         ps->count -= 1;
-        ps->offset = ++ps->offset % ps->nparticles;
+        ps->offset = (ps->offset + 1) % ps->nparticles;
     }
 }
 

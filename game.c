@@ -66,6 +66,9 @@ int main() {
     }
     ship.rcs_particles = ps;
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+
     while (running) {
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -85,11 +88,7 @@ int main() {
 
         draw_rocket(&ship);
         draw_rocket_gui(&ship);
-        glColor4f(.3, .3, .3, 1);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
         draw_particles(ps);
-        glColor4f(1, 1, 1, 1);
 
         OGL_SwapBuffers();
         if (ei_key_down(KEY_ESC)) running = 0;

@@ -6,6 +6,7 @@
 struct particle {
     vec2 pos;
     vec2 vel;
+    float life, g, b, a, radius;
 };
 
 struct particle_system {
