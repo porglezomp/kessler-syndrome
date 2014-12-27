@@ -1,6 +1,6 @@
 #include "gui.h"
 
-#include "ship.h"
+#include "rocket.h"
 #include "space.h"
 #include "GLES/gl.h"
 
