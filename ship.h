@@ -3,10 +3,15 @@
 
 #include "vec2.h"
 
+struct rigidbody {
+    vec2 pos, vel, accel;
+    double angle, angle_vel, angle_accel;
+};
+
 struct rocket {
-    vec2 pos, vel, accel, input;
-    float angle, angle_vel,
-          angle_force, thrust, max_rcs_fuel,
+    struct rigidbody rbody;
+    vec2 input;
+    float angle_force, thrust, max_rcs_fuel,
           max_main_fuel, rcs_fuel, main_fuel,
           rcs_fuel_rate, main_fuel_rate;
     int damping;

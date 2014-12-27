@@ -1,11 +1,11 @@
 #include "particles.h"
 
 #include "vec2.h"
-#include "space.h"
 
 #include "GLES/gl.h"
 
 #include <stdlib.h>
+#include <math.h>
 
 struct particle_system *new_particle_system(int nparticles) {
     struct particle_system *ps = malloc(sizeof(struct particle_system));
@@ -33,8 +33,8 @@ void emit(struct particle_system *ps, const vec2 *pos, const vec2 *vel) {
     } else {
         ps->offset = (ps->offset + 1) % ps->nparticles;
     }
-    struct particle p = {.pos=*pos, .vel=*vel, .life=.5,
-                         .g=1, .b=1, .a=1, .radius=1};
+    struct particle p = {.pos=v2tov2f(pos), .vel=v2tov2f(vel), .life=.5,
+                         .r=0, .g=0, .b=0, .a=1, .radius=5};
     *nth_particle(ps, ps->count) = p;
 }
 
@@ -43,13 +43,20 @@ void update_particles(struct particle_system *ps) {
     int to_remove = 0;
     for (int i = 0; i < ps->count; i++) {
         struct particle *nth = nth_particle(ps, i);
-        v2inc(&nth->pos, &nth->vel);
-        loop(&nth->pos);
-        nth->life -= 0.01;
-        nth->g = nth->life; nth->b = nth->life;
+        v2finc(&nth->pos, &nth->vel);
+        nth->life -= 0.05;
+        nth->radius += 1;
+
+        float area = nth->radius*nth->radius;
+        float color = 8*nth->life/area;
+        nth->r = nth->g = nth->b = color;
+
+        // The particles all have the same lifetime, so the oldest ones are always
+        // at the front of the buffer. We can simply remove the n from the front of
+        // the buffer if n particles have died.
         if (nth->life <= 0) to_remove += 1;
-        nth->radius += 0.1;
     }
+    // Remove all of the dead particles
     for (int i = 0; i < to_remove; i++) kill_particle(ps);
 }
 
@@ -59,7 +66,7 @@ void draw_particles(struct particle_system *ps) {
     glEnableClientState(GL_POINT_SIZE_ARRAY_OES);
     glPointSizePointerOES(GL_FLOAT, sizeof(struct particle), &(ps->particles[0].radius));
     glEnableClientState(GL_COLOR_ARRAY);
-    glColorPointer(4, GL_FLOAT, sizeof(struct particle), &(ps->particles[0].life));
+    glColorPointer(4, GL_FLOAT, sizeof(struct particle), &(ps->particles[0].r));
 
     int drawcount = ps->count;
     if (ps->offset + ps->count >= ps->nparticles) {

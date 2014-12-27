@@ -81,7 +81,7 @@ int main() {
         update_particles(ps);
 
         // Loop the ship around the screen!
-        loop(&ship.pos);
+        loop(&ship.rbody.pos);
 
         draw_rocket(&ship);
         draw_rocket_gui(&ship);
