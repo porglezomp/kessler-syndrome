@@ -20,6 +20,25 @@
 #define DISK_RADIUS 0.01
 #define PARTICLE_VEL 0.02
 
+struct rocket new_rocket() {
+    struct rigidbody rbody = {
+        .mass=1,
+        .moment_inertia=1
+    };
+    struct rocket r = {
+        .angle_force = 0.1,
+        .thrust = 0.0001,
+        .max_rcs_fuel = 100,
+        .rcs_fuel = 100,
+        .rcs_fuel_rate = 0.02,
+        .max_main_fuel = 3000,
+        .main_fuel = 3000,
+        .main_fuel_rate = 0.3,
+        .rbody=rbody
+    };
+    return r;
+}
+
 static float ship_mesh[NUM_BODY*2 + NUM_THRUST*2] = {
     // Body
     0,  0,
@@ -32,17 +51,6 @@ static float ship_mesh[NUM_BODY*2 + NUM_THRUST*2] = {
    .5, -.5,
 };
 
-vec2 rb_point_velocity(const struct rigidbody *rb, vec2 *relative_pos) {
-    vec2 vel = rb->vel;
-    float vel_rads = rb->angle_vel*M_PI/180;
-    float rads = rb->angle*M_PI/180;
-    float r = v2len(relative_pos);
-    float fac = r*vel_rads;
-    vec2 rotational = (vec2) {fac*cos(rads), -fac*sin(rads)};
-    v2inc(&vel, &rotational);
-    return vel;
-}
-
 void input_physics(struct rocket *s) {
     // Enable stabilization, fire opposite rotation
     // (0.5 because half as powerful as normal thrusters)
@@ -50,7 +58,8 @@ void input_physics(struct rocket *s) {
 
     // Maneuvering thrusters
     if (s->rcs_fuel > 0 && s->input.x != 0) {
-        s->rbody.angle_accel = s->input.x * s->angle_force;
+//        s->rbody.angle_accel = s->input.x * s->angle_force;
+        s->rbody.torque += s->input.x * s->angle_force;
         // Consume fuel proportional to the force
         s->rcs_fuel -= s->rcs_fuel_rate * abs(s->input.x);
     } else if (s->rcs_fuel < 0) s->rcs_fuel = 0;
@@ -60,7 +69,8 @@ void input_physics(struct rocket *s) {
         s->main_fuel -= s->main_fuel_rate * s->input.y;
         vec2 direction = v2angle(s->rbody.angle);
         v2muli(&direction, s->input.y * s->thrust);
-        s->rbody.accel = direction;
+        rb_apply_force(&s->rbody, &v2zero, &direction);
+//        s->rbody.force += direction;
     } else if (s->main_fuel < 0) s->main_fuel = 0;
 }
 
@@ -118,15 +128,4 @@ void draw_rocket(const struct rocket *s) {
 
     // Back to global space for rendering
     glPopMatrix();
-}
-
-void update_rigidbody(struct rigidbody *rbody) {
-    v2inc(&rbody->vel, &rbody->accel);
-    v2inc(&rbody->pos, &rbody->vel);
-    rbody->angle_vel += rbody->angle_accel;
-    rbody->angle += rbody->angle_vel;
-    // Acceleration needs to be provided by controls
-    // don't let it accumulate
-    rbody->accel = v2zero;
-    rbody->angle_accel = 0;
 }

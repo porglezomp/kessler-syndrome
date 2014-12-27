@@ -53,7 +53,7 @@ int main() {
     // and the rocket itself
     struct particle_system *ps = new_particle_system(2048);
     if (ps == NULL) return EXIT_FAILURE;
-    struct rocket ship = {
+/*    struct rocket ship = {
         .angle_force = 0.1,
         .thrust = 0.0001,
         .max_rcs_fuel = 100,
@@ -61,9 +61,10 @@ int main() {
         .rcs_fuel_rate = 0.02,
         .max_main_fuel = 3000,
         .main_fuel = 3000,
-        .main_fuel_rate = 0.3,
-        .rcs_particles = ps
-    };
+        .main_fuel_rate = 0.3
+    };*/
+    struct rocket ship = new_rocket();
+    ship.rcs_particles = ps;
 
     // Mainloop
     while (running) {

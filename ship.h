@@ -1,12 +1,8 @@
 #ifndef _SHIP_H
 #define _SHIP_H
 
+#include "rigidbody.h"
 #include "vec2.h"
-
-struct rigidbody {
-    vec2 pos, vel, accel;
-    double angle, angle_vel, angle_accel;
-};
 
 struct rocket {
     struct rigidbody rbody;
@@ -19,7 +15,7 @@ struct rocket {
 };
 
 void input_physics(struct rocket *s);
-void update_rigidbody(struct rigidbody*);
 void draw_rocket(const struct rocket *s);
+struct rocket new_rocket();
 
 #endif
