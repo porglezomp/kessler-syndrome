@@ -6,6 +6,7 @@
 
 #include "GLES/gl.h"
 #include <stdlib.h>
+#include <math.h>
 
 // Offsets and lengths in the ship mesh
 #define NUM_BODY   4
@@ -31,6 +32,17 @@ static float ship_mesh[NUM_BODY*2 + NUM_THRUST*2] = {
    .5, -.5,
 };
 
+vec2 rb_point_velocity(const struct rigidbody *rb, vec2 *relative_pos) {
+    vec2 vel = rb->vel;
+    float vel_rads = rb->angle_vel*M_PI/180;
+    float rads = rb->angle*M_PI/180;
+    float r = v2len(relative_pos);
+    float fac = r*vel_rads;
+    vec2 rotational = (vec2) {fac*cos(rads), -fac*sin(rads)};
+    v2inc(&vel, &rotational);
+    return vel;
+}
+
 void input_physics(struct rocket *s) {
     // Enable stabilization, fire opposite rotation
     // (0.5 because half as powerful as normal thrusters)
@@ -38,7 +50,7 @@ void input_physics(struct rocket *s) {
 
     // Maneuvering thrusters
     if (s->rcs_fuel > 0 && s->input.x != 0) {
-        s->rbody.angle_vel += s->input.x * s->angle_force;
+        s->rbody.angle_accel = s->input.x * s->angle_force;
         // Consume fuel proportional to the force
         s->rcs_fuel -= s->rcs_fuel_rate * abs(s->input.x);
     } else if (s->rcs_fuel < 0) s->rcs_fuel = 0;
@@ -84,9 +96,11 @@ void draw_rocket(const struct rocket *s) {
 
         for (int i = 0; i < NUM_PARTICLES; i++) {
             // Randomly vary the direction a little bit
+            // in order to produce a cone of particles
             vec2 dir = v2angle(angle + randf() * SPREAD);
             v2muli(&dir, PARTICLE_VEL);
-            v2inc(&dir, &s->rbody.vel);
+            vec2 relative_vel = rb_point_velocity(&s->rbody, &forward);
+            v2inc(&dir, &relative_vel);
             // Emit on a random disk to prevent stripe artifacts
             vec2 modifier = v2angle(randf()*180);
             v2muli(&modifier, DISK_RADIUS*randf());
@@ -106,11 +120,13 @@ void draw_rocket(const struct rocket *s) {
     glPopMatrix();
 }
 
-void update_rocket(struct rocket *s) {
-    v2inc(&s->rbody.vel, &s->rbody.accel);
-    v2inc(&s->rbody.pos, &s->rbody.vel);
-    s->rbody.angle += s->rbody.angle_vel;
+void update_rigidbody(struct rigidbody *rbody) {
+    v2inc(&rbody->vel, &rbody->accel);
+    v2inc(&rbody->pos, &rbody->vel);
+    rbody->angle_vel += rbody->angle_accel;
+    rbody->angle += rbody->angle_vel;
     // Acceleration needs to be provided by controls
     // don't let it accumulate
-    s->rbody.accel = v2zero;
+    rbody->accel = v2zero;
+    rbody->angle_accel = 0;
 }

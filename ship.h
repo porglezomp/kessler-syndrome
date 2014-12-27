@@ -19,7 +19,7 @@ struct rocket {
 };
 
 void input_physics(struct rocket *s);
-void update_rocket(struct rocket *s);
+void update_rigidbody(struct rigidbody*);
 void draw_rocket(const struct rocket *s);
 
 #endif

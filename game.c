@@ -77,7 +77,7 @@ int main() {
         if (ei_key_down(KEY_RIGHT)) ship.input.x += 1;
         if (ei_key_down(KEY_S))     ship.damping = 1;
         input_physics(&ship);
-        update_rocket(&ship);
+        update_rigidbody(&ship.rbody);
         update_particles(ps);
 
         // Loop the ship around the screen!

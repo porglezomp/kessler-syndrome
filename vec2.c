@@ -19,9 +19,8 @@ vec2f v2fdown = {0, -1};
 vec2 v2angle(double angle) {
     double rads = angle/180*M_PI;
     // Swap sin and cos so that 0 degrees points up
-    // I think this makes angles increase clockwise?
-    vec2 res = {sin(rads), cos(rads)};
-    return res;
+    // This makes angles increase clockwise
+    return (vec2) {sin(rads), cos(rads)};
 }
 
 vec2 v2ftov2(const vec2f *v2) { return (vec2) {v2->x, v2->y}; }
