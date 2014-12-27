@@ -4,7 +4,7 @@
 #include "vec2.h"
 
 struct rocket {
-    vec2 accel, vel, pos, input;
+    vec2 pos, vel, accel, input;
     float angle, angle_vel,
           angle_force, thrust, max_rcs_fuel,
           max_main_fuel, rcs_fuel, main_fuel,
@@ -14,7 +14,7 @@ struct rocket {
 };
 
 void input_physics(struct rocket *s);
-void physics(struct rocket *s);
+void update_rocket(struct rocket *s);
 void draw_rocket(const struct rocket *s);
 
 #endif

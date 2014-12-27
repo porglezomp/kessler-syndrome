@@ -6,6 +6,9 @@
 struct particle {
     vec2 pos;
     vec2 vel;
+    // Need to include g, b, a for coloring the particle
+    // life is treated as the red channel, g, b, and a are
+    // set to be the same as life in the update loop
     float life, g, b, a, radius;
 };
 

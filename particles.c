@@ -1,17 +1,11 @@
 #include "particles.h"
+
 #include "vec2.h"
 #include "space.h"
 
 #include "GLES/gl.h"
 
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdio.h>
-#include <signal.h>
-#include <linux/input.h>
-#include <math.h>
 
 struct particle_system *new_particle_system(int nparticles) {
     struct particle_system *ps = malloc(sizeof(struct particle_system));
