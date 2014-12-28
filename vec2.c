@@ -124,7 +124,37 @@ double v2cross(const vec2 *lhs, const vec2 *rhs) {
 }
 
 // ==========================================================================//
-// Vector math for vec2d (float)                                             //
+// Transformations                                                           //
+// ==========================================================================//
+
+// Use a clockwise rotation matrix for these
+// The standard counterclockwise matrix is:
+//  [co -si]
+//  [si  co]
+// and the clockwise matrix is the transpose
+// of this matrix, which would be:
+//  [ co si]
+//  [-si co]
+vec2 v2rot(const vec2 *vec, double theta) {
+    double rads = theta*M_PI/180;
+    double co = cos(rads);
+    double si = sin(rads);
+    return (vec2) {co*vec->x + si*vec->y,
+                   -si*vec->x + co*vec->y};
+}
+
+void v2roti(vec2 *vec, double theta) {
+    double rads = theta*M_PI/180;
+    double co = cos(rads);
+    double si = sin(rads);
+
+    double x = co*vec->x + si*vec->y;
+    vec->y = -si*vec->x + co*vec->y;
+    vec->x = x;
+}
+
+// ==========================================================================//
+// Vector math for vec2f (float)                                             //
 // ==========================================================================//
 
 float v2fdot(const vec2f *lhs, const vec2f *rhs) {

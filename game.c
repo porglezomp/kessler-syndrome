@@ -1,3 +1,4 @@
+#include "camera.h"
 #include "vec2.h"
 #include "rocket.h"
 #include "particles.h"
@@ -26,10 +27,24 @@ void cleanup() {
     printf("\033[H\033[2J");
 }
 
+void draw_bg();
+
+#define GRID_SIZE 200
+#define GRID_SCALE 0.5
+vec2f *bg;
+
 int main() {
     // Initialize the OpenGL context and framebuffer
     OGL_Init();
     atexit(OGL_Quit);
+
+    bg = calloc(GRID_SIZE*GRID_SIZE, sizeof(vec2f));
+    int x, y;
+    for (y = 0; y < GRID_SIZE; y++) {
+        for (x = 0; x < GRID_SIZE; x++) {
+            bg[y*GRID_SIZE+x] = (vec2f) {(x-GRID_SIZE/2)*GRID_SCALE, (y-GRID_SIZE/2)*GRID_SCALE};
+        }
+    }
 
     // Set up the view
     asp = (float) raspiGL_screen_width / raspiGL_screen_height;
@@ -40,6 +55,11 @@ int main() {
     glClearColor(0, 0, 0, 1);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
+
+    struct camera cam = {
+        .pos=v2zero,
+        .scale=1
+    };
 
     // Load our handler for ^C, should only quit
     signal(SIGINT, handle_interrupt);
@@ -53,16 +73,7 @@ int main() {
     // and the rocket itself
     struct particle_system *ps = new_particle_system(2048);
     if (ps == NULL) return EXIT_FAILURE;
-/*    struct rocket ship = {
-        .angle_force = 0.1,
-        .thrust = 0.0001,
-        .max_rcs_fuel = 100,
-        .rcs_fuel = 100,
-        .rcs_fuel_rate = 0.02,
-        .max_main_fuel = 3000,
-        .main_fuel = 3000,
-        .main_fuel_rate = 0.3
-    };*/
+
     struct rocket ship = new_rocket();
     ship.rcs_particles = ps;
 
@@ -78,15 +89,18 @@ int main() {
         if (ei_key_down(KEY_RIGHT)) ship.input.x += 1;
         if (ei_key_down(KEY_S))     ship.damping = 1;
         input_physics(&ship);
+
         update_rigidbody(&ship.rbody);
         update_particles(ps);
+        update_camera(&cam, &ship);
 
-        // Loop the ship around the screen!
-        loop(&ship.rbody.pos);
-
+        camera_start(&cam);
+        draw_bg();
         draw_rocket(&ship);
-        draw_rocket_gui(&ship);
         draw_particles(ps);
+        camera_end();
+
+        draw_rocket_gui(&ship);
 
         OGL_SwapBuffers();
         // Quit on escape key
@@ -94,6 +108,14 @@ int main() {
     }
 
     free_particle_system(ps);
+    free(bg);
     return EXIT_SUCCESS;
 }
 
+void draw_bg() {
+    glPointSize(4);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, bg);
+
+    glDrawArrays(GL_POINTS, 0, GRID_SIZE*GRID_SIZE);
+}

@@ -50,6 +50,10 @@ vec2 v2normed(const vec2 *vec);
 void v2norm(vec2 *vec);
 double v2cross(const vec2 *lhs, const vec2 *rhs);
 
+// Transformations
+vec2 v2rot(const vec2 *vec, double theta);
+void v2roti(vec2 *vec, double theta);
+
 // Vector math for vec2f (float)
 float v2fdot(const vec2f*, const vec2f*);
 float v2flen(const vec2f*);

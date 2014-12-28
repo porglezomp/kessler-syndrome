@@ -66,7 +66,6 @@ void input_physics(struct rocket *s) {
 
     // Maneuvering thrusters
     if (s->rcs_fuel > 0 && s->input.x != 0) {
-//        s->rbody.angle_accel = s->input.x * s->angle_force;
         vec2 forward = v2angle(s->rbody.angle);
         v2muli(&forward, 0.1);
         // The center point to emit from
@@ -76,7 +75,6 @@ void input_physics(struct rocket *s) {
         vec2 thrust = v2angle(s->rbody.angle + 90);
         v2muli(&thrust, s->angle_force * s->input.x);
         rb_apply_force(&s->rbody, &point, &thrust);
-//        s->rbody.torque += s->input.x * s->angle_force;
         // Consume fuel proportional to the force
         s->rcs_fuel -= s->rcs_fuel_rate * abs(s->input.x);
     } else if (s->rcs_fuel < 0) s->rcs_fuel = 0;
@@ -87,7 +85,6 @@ void input_physics(struct rocket *s) {
         vec2 direction = v2angle(s->rbody.angle);
         v2muli(&direction, s->input.y * s->thrust);
         rb_apply_force(&s->rbody, &s->rbody.pos, &direction);
-//        s->rbody.force += direction;
     } else if (s->main_fuel < 0) s->main_fuel = 0;
 }
 
