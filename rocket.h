@@ -9,7 +9,7 @@ struct rocket {
     vec2 input;
     float angle_force, thrust, max_rcs_fuel,
           max_main_fuel, rcs_fuel, main_fuel,
-          rcs_fuel_rate, main_fuel_rate;
+          rcs_fuel_rate, main_fuel_rate, scale;
     int damping;
     struct particle_system *rcs_particles;
 };

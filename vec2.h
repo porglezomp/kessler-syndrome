@@ -44,10 +44,11 @@ void v2fmuli(vec2f*, float);
 
 // Vector math for vec2 (double)
 double v2dot(const vec2 *lhs, const vec2 *rhs);
-vec2 v2proj(const vec2 *lhs, const vec2 *rhs);
+vec2 v2proj(const vec2 *lhs, const vec2 *rhs); // project lhs onto rhs
 double v2len(const vec2 *vec);
 vec2 v2normed(const vec2 *vec);
 void v2norm(vec2 *vec);
+double v2cross(const vec2 *lhs, const vec2 *rhs);
 
 // Vector math for vec2f (float)
 float v2fdot(const vec2f*, const vec2f*);

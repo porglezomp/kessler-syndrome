@@ -45,8 +45,7 @@ void v2inc(vec2 *lhs, const vec2 *rhs) {
 
 // lhs - rhs
 vec2 v2sub(const vec2 *lhs, const vec2 *rhs) {
-    vec2 res = {lhs->x - rhs->x, lhs->y - rhs->y};
-    return res;
+    return (vec2) {lhs->x - rhs->x, lhs->y - rhs->y};
 }
 
 // lhs -= rhs
@@ -110,6 +109,18 @@ vec2 v2normed(const vec2 *vec) {
 void v2norm(vec2 *vec) {
     double recip_len = 1/v2len(vec);
     v2muli(vec, recip_len);
+}
+
+// | a b | = (ad - bc)
+// | c d |
+// A x B in 2d =
+// | i  j  1 |
+// | Ax Ay 0 |
+// | Bx By 0 |
+// = i(Ay*0 - By*0) - j(Ax*0 - Bx*0) + (Ax*By - Bx*Ay)
+// = (Ax*By - Bx*Ay)
+double v2cross(const vec2 *lhs, const vec2 *rhs) {
+    return lhs->x*rhs->y - rhs->x*lhs->y;
 }
 
 // ==========================================================================//

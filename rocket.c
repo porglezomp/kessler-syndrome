@@ -22,18 +22,19 @@
 
 struct rocket new_rocket() {
     struct rigidbody rbody = {
-        .mass=1,
-        .moment_inertia=1
+        .mass=100000,
+        .moment_inertia=5
     };
     struct rocket r = {
-        .angle_force = 0.1,
-        .thrust = 0.0001,
-        .max_rcs_fuel = 100,
-        .rcs_fuel = 100,
-        .rcs_fuel_rate = 0.02,
-        .max_main_fuel = 3000,
-        .main_fuel = 3000,
-        .main_fuel_rate = 0.3,
+        .scale=.05,
+        .angle_force=1,
+        .thrust=30,
+        .max_rcs_fuel=100,
+        .rcs_fuel=100,
+        .rcs_fuel_rate=0.02,
+        .max_main_fuel=3000,
+        .main_fuel=3000,
+        .main_fuel_rate=0.3,
         .rbody=rbody
     };
     return r;
@@ -41,15 +42,22 @@ struct rocket new_rocket() {
 
 static float ship_mesh[NUM_BODY*2 + NUM_THRUST*2] = {
     // Body
-    0,  0,
-    1, -1,
-    0,  3,
-   -1, -1,
+    0,  -1,
+    1, -2,
+    0,  2,
+   -1, -2,
    // Main thrust
-   -.5, -.5,
-   0, -2,
-   .5, -.5,
+   -.5, -1.5,
+   0, -3,
+   .5, -1.5,
 };
+
+/*static vec2 thruster_locations[4] = {
+    {.5, 2},
+    {-.5, 2},
+    {-.5, -2},
+    {.5, -2}
+};*/
 
 void input_physics(struct rocket *s) {
     // Enable stabilization, fire opposite rotation
@@ -59,7 +67,16 @@ void input_physics(struct rocket *s) {
     // Maneuvering thrusters
     if (s->rcs_fuel > 0 && s->input.x != 0) {
 //        s->rbody.angle_accel = s->input.x * s->angle_force;
-        s->rbody.torque += s->input.x * s->angle_force;
+        vec2 forward = v2angle(s->rbody.angle);
+        v2muli(&forward, 0.1);
+        // The center point to emit from
+        // TODO: Emit from either side of this
+        vec2 point = v2add(&s->rbody.pos, &forward);
+
+        vec2 thrust = v2angle(s->rbody.angle + 90);
+        v2muli(&thrust, s->angle_force * s->input.x);
+        rb_apply_force(&s->rbody, &point, &thrust);
+//        s->rbody.torque += s->input.x * s->angle_force;
         // Consume fuel proportional to the force
         s->rcs_fuel -= s->rcs_fuel_rate * abs(s->input.x);
     } else if (s->rcs_fuel < 0) s->rcs_fuel = 0;
@@ -69,7 +86,7 @@ void input_physics(struct rocket *s) {
         s->main_fuel -= s->main_fuel_rate * s->input.y;
         vec2 direction = v2angle(s->rbody.angle);
         v2muli(&direction, s->input.y * s->thrust);
-        rb_apply_force(&s->rbody, &v2zero, &direction);
+        rb_apply_force(&s->rbody, &s->rbody.pos, &direction);
 //        s->rbody.force += direction;
     } else if (s->main_fuel < 0) s->main_fuel = 0;
 }
@@ -82,7 +99,7 @@ void draw_rocket(const struct rocket *s) {
     // Perform rocket transforms
     glPushMatrix();
     glTranslatef(s->rbody.pos.x, s->rbody.pos.y, 0);
-    glScalef(0.05, 0.05, 0.05);
+    glScalef(s->scale, s->scale, s->scale);
     glRotatef(-s->rbody.angle, 0, 0, 1);
 
     // Draw the main rocket
