@@ -112,6 +112,15 @@ static unsigned short ship_indices[NUM_BODY] = {
     28, 29
 };
 
+static vec2 rcs_points[4] = {
+    {0.05, 0.1},
+    {-0.05, 0.1},
+    {0.07, -0.1},
+    {-0.07, -0.1}
+};
+
+static float rcs_angles[4] = { 90, -90, 90, -90 };
+
 void input_physics(struct rocket *s) {
     // Enable stabilization, fire opposite rotation
     // (0.5 because half as powerful as normal thrusters)
@@ -119,17 +128,20 @@ void input_physics(struct rocket *s) {
 
     // Maneuvering thrusters
     if (s->rcs_fuel > 0 && s->input.x != 0) {
-        vec2 forward = v2angle(s->rbody.angle);
-        v2muli(&forward, 0.1);
+        int index;
+        if (s->input.x > 0) index = 1;
+        else index = 0;
         // The center point to emit from
-        // TODO: Emit from either side of this
-        vec2 point = v2add(&s->rbody.pos, &forward);
+        vec2 point = rcs_points[index];
+        v2roti(&point, s->rbody.angle);
+        v2inc(&point, &s->rbody.pos);
 
-        vec2 thrust = v2angle(s->rbody.angle + 90);
-        v2muli(&thrust, s->angle_force * s->input.x);
+        double mag_x = fabs(s->input.x);
+        vec2 thrust = v2angle(s->rbody.angle + rcs_angles[index]);
+        v2muli(&thrust, s->angle_force * -mag_x);
         rb_apply_force(&s->rbody, &point, &thrust);
         // Consume fuel proportional to the force
-        s->rcs_fuel -= s->rcs_fuel_rate * abs(s->input.x);
+        s->rcs_fuel -= s->rcs_fuel_rate * mag_x;
     } else if (s->rcs_fuel < 0) s->rcs_fuel = 0;
 
     // Linear thruster (can't fire backwards)
@@ -142,10 +154,6 @@ void input_physics(struct rocket *s) {
 }
 
 void draw_rocket(const struct rocket *s) {
-    // Use the rocket model
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, ship_mesh);
-
     // Perform rocket transforms
     glPushMatrix();
     glTranslatef(s->rbody.pos.x, s->rbody.pos.y, 0);
@@ -153,30 +161,35 @@ void draw_rocket(const struct rocket *s) {
     glRotatef(-s->rbody.angle, 0, 0, 1);
 
     // Draw the main rocket
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, ship_mesh);
     glDrawElements(GL_LINES, NUM_BODY, GL_UNSIGNED_SHORT, ship_indices);
 
     // Maneuvering thrusters
     // Draw the RCS jets if the rotation controls are enabled
     // Particle emission
     if (s->rcs_fuel > 0 && s->input.x != 0) {
-        vec2 forward = v2angle(s->rbody.angle);
-        v2muli(&forward, 0.1);
-        // The center point to emit from
-        // TODO: Emit from either side of this
-        vec2 point = v2add(&s->rbody.pos, &forward);
-        float angle_offset = 0;
-        if (s->input.x > 0) angle_offset = -90;
-        else angle_offset = 90;
+
+        int index;
+        // Fire differently for left and right input
+        if (s->input.x > 0) index = 1;
+        else index = 0;
+        vec2 point = rcs_points[index];
+
+        // Move the origin of the thruster from local coordinates into
+        // world coordinates
+        v2roti(&point, s->rbody.angle);
+        vec2 relative_vel = rb_point_velocity(&s->rbody, &point);
+        v2inc(&point, &s->rbody.pos);
 
         // The central angle to emit at
-        float angle = s->rbody.angle + angle_offset;
+        float angle = s->rbody.angle + rcs_angles[index];
 
         for (int i = 0; i < NUM_PARTICLES; i++) {
             // Randomly vary the direction a little bit
             // in order to produce a cone of particles
             vec2 dir = v2angle(angle + randf() * SPREAD);
             v2muli(&dir, PARTICLE_VEL);
-            vec2 relative_vel = rb_point_velocity(&s->rbody, &forward);
             v2inc(&dir, &relative_vel);
             // Emit on a random disk to prevent stripe artifacts
             vec2 modifier = v2angle(randf()*180);

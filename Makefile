@@ -13,3 +13,9 @@ $(APP): $(OBJS)
 clean:
 	rm -f $(OBJS)
 	rm -f $(APP)
+
+test: test/Test.out
+
+test/Test.out: test/test.c vec2.o
+	gcc -o test/Test.out -I./ test/test.c vec2.o -lm
+	./test/Test.out
