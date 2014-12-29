@@ -14,5 +14,6 @@ int main() {
     v2roti(&v, 45);
     printvec(v);
     printvec(v2rot(&v, 45+180));
+    printf("%i %i\n", (1<<0), (1<<1));
     return 0;
 }

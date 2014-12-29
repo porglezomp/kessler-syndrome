@@ -33,7 +33,7 @@ void draw_bg();
 #define GRID_SCALE 0.5
 vec2f *bg;
 
-int main() {
+int main(int argc, const char **argv) {
     // Initialize the OpenGL context and framebuffer
     OGL_Init();
     atexit(OGL_Quit);
@@ -63,7 +63,9 @@ int main() {
 
     // Load our handler for ^C, should only quit
     signal(SIGINT, handle_interrupt);
+    if (argc <= 1) {
     atexit(cleanup);
+    }
 
     // Setup the input handler using the default input device
     // (default is "/dev/input/event1")
@@ -85,13 +87,25 @@ int main() {
     // Mainloop
     while (running) {
         glClear(GL_COLOR_BUFFER_BIT);
-
-        ship.input = v2zero, ship.damping = 0;
+        ei_frame_start();
         ei_poll_all();
+
+        ship.input = v2zero, ship.damping = 0, ship.firing_thrusters = 0;
         if (ei_key_down(KEY_UP))    ship.input.y += 1;
         if (ei_key_down(KEY_DOWN))  ship.input.y -= 1;
         if (ei_key_down(KEY_LEFT))  ship.input.x -= 1;
         if (ei_key_down(KEY_RIGHT)) ship.input.x += 1;
+
+        int i;
+        // This will only work if the KEY_n codes are contiguous
+        for (i = 0; i < NUM_THRUSTERS; i++) {
+            if (ei_frame_keypress(KEY_1+i)) toggle_thruster(&ship, i);
+        }
+        // Disable all RCS thrusters with the zero key
+        if (ei_frame_keypress(KEY_0)) ship.active_thrusters = 0;
+        // Fire all enabled RCS thrusters
+        if (ei_key_down(KEY_SPACE)) all_rcs(&ship);
+
         if (ei_key_down(KEY_S))     ship.damping = 1;
         input_physics(&ship);
 

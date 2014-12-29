@@ -1,7 +1,8 @@
 LIBS = $(shell pkg-config PiGL --libs) -lm -leasyinput
-CFLAGS = $(shell pkg-config PiGL --cflags) --std=gnu99 -fgnu89-inline -g -Wall -Werror
+CFLAGS = $(shell pkg-config PiGL --cflags) --std=gnu99 -fgnu89-inline -g -Wall -Werror -MMD
 SRCS = game.c vec2.c rocket.c particles.c space.c gui.c rigidbody.c camera.c
-OBJS = game.o vec2.o rocket.o particles.o space.o gui.o rigidbody.o camera.o
+OBJS = $(SRCS:%.c=%.o)
+DEPS = $(SRCS:%.c=%.d)
 APP = Game.out
 
 $(APP): $(OBJS)
@@ -12,6 +13,7 @@ $(APP): $(OBJS)
 
 clean:
 	rm -f $(OBJS)
+	rm -f $(DEPS)
 	rm -f $(APP)
 
 test: test/Test.out
@@ -19,3 +21,5 @@ test: test/Test.out
 test/Test.out: test/test.c vec2.o
 	gcc -o test/Test.out -I./ test/test.c vec2.o -lm
 	./test/Test.out
+
+-include $(DEPS)
