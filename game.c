@@ -71,11 +71,16 @@ int main() {
 
     // Initialize the particle system for the rocket
     // and the rocket itself
-    struct particle_system *ps = new_particle_system(2048);
-    if (ps == NULL) return EXIT_FAILURE;
+    struct particle_system *rcs_ps = new_particle_system(512);
+    if (rcs_ps == NULL) return EXIT_FAILURE;
+    struct particle_system *main_ps = new_particle_system(2048);
+    if (main_ps == NULL) return EXIT_FAILURE;
+    main_ps->life = 5;
+    main_ps->growth = 1;
 
     struct rocket ship = new_rocket();
-    ship.rcs_particles = ps;
+    ship.rcs_particles = rcs_ps;
+    ship.main_particles = main_ps;
 
     // Mainloop
     while (running) {
@@ -91,13 +96,15 @@ int main() {
         input_physics(&ship);
 
         update_rigidbody(&ship.rbody);
-        update_particles(ps);
+        update_particles(rcs_ps);
+        update_particles(main_ps);
         update_camera(&cam, &ship);
 
         camera_start(&cam);
         draw_bg();
         draw_rocket(&ship);
-        draw_particles(ps);
+        draw_particles(rcs_ps);
+        draw_particles(main_ps);
         camera_end();
 
         draw_rocket_gui(&ship);
@@ -107,7 +114,8 @@ int main() {
         if (ei_key_down(KEY_ESC)) running = 0;
     }
 
-    free_particle_system(ps);
+    free_particle_system(rcs_ps);
+    free_particle_system(main_ps);
     free(bg);
     return EXIT_SUCCESS;
 }

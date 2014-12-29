@@ -19,6 +19,10 @@ struct particle_system *new_particle_system(int nparticles) {
     ps->particles = particles;
     ps->offset = 0;
     ps->count = 0;
+    ps->life = 0.5;
+    ps->growth = 1;
+    ps->life_dec = 0.05;
+    ps->brightness = 8;
     return ps;
 }
 
@@ -33,7 +37,7 @@ void emit(struct particle_system *ps, const vec2 *pos, const vec2 *vel) {
     } else {
         ps->offset = (ps->offset + 1) % ps->nparticles;
     }
-    struct particle p = {.pos=v2tov2f(pos), .vel=v2tov2f(vel), .life=.5,
+    struct particle p = {.pos=v2tov2f(pos), .vel=v2tov2f(vel), .life=ps->life,
                          .r=0, .g=0, .b=0, .a=1, .radius=5};
     *nth_particle(ps, ps->count) = p;
 }
@@ -44,11 +48,11 @@ void update_particles(struct particle_system *ps) {
     for (int i = 0; i < ps->count; i++) {
         struct particle *nth = nth_particle(ps, i);
         v2finc(&nth->pos, &nth->vel);
-        nth->life -= 0.05;
-        nth->radius += 1;
+        nth->life -= ps->life_dec;
+        nth->radius += ps->growth;
 
         float area = nth->radius*nth->radius;
-        float color = 8*nth->life/area;
+        float color = ps->brightness*nth->life/area;
         nth->r = nth->g = nth->b = color;
 
         // The particles all have the same lifetime, so the oldest ones are always

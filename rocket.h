@@ -11,7 +11,7 @@ struct rocket {
           max_main_fuel, rcs_fuel, main_fuel,
           rcs_fuel_rate, main_fuel_rate, scale;
     int damping;
-    struct particle_system *rcs_particles;
+    struct particle_system *rcs_particles, *main_particles;
 };
 
 void input_physics(struct rocket *s);

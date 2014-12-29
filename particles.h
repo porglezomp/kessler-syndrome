@@ -15,6 +15,7 @@ struct particle {
 struct particle_system {
     struct particle *particles;
     int offset, count, nparticles;
+    float life, growth, life_dec, brightness;
 };
 
 struct particle_system *new_particle_system(int nparticles);

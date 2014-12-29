@@ -9,13 +9,12 @@
 #include <math.h>
 
 // Offsets and lengths in the ship mesh
-#define NUM_BODY   4
-#define START_BODY 0
-#define NUM_THRUST 3
-#define THRUST_START  4
+//#define START_BODY 0
+//#define NUM_THRUST 3
+//#define THRUST_START  4
 
 // Parameters for emitting RCS particles
-#define SPREAD 10
+#define SPREAD 10 // degrees
 #define NUM_PARTICLES 16
 #define DISK_RADIUS 0.01
 #define PARTICLE_VEL 0.02
@@ -26,7 +25,7 @@ struct rocket new_rocket() {
         .moment_inertia=5
     };
     struct rocket r = {
-        .scale=.05,
+        .scale=.03,
         .angle_force=1,
         .thrust=30,
         .max_rcs_fuel=100,
@@ -40,24 +39,78 @@ struct rocket new_rocket() {
     return r;
 }
 
-static float ship_mesh[NUM_BODY*2 + NUM_THRUST*2] = {
-    // Body
-    0,  -1,
-    1, -2,
-    0,  2,
-   -1, -2,
-   // Main thrust
-   -.5, -1.5,
-   0, -3,
-   .5, -1.5,
+#define NUM_VERTS 30
+static float ship_mesh[NUM_VERTS*2] = {
+    // Main border (0)
+    1, 4,
+    2.5, 3,
+    3.5, -2,
+    2.5, -3,
+    1.5, -3.2,
+    -1.5, -3.2,
+    -2.5, -3,
+    -3.5, -2,
+    -2.5, 3,
+    -1, 4,
+    // Back container (10)
+    -1, -1,
+    -1.5, -3,
+    -1.5, -3.5,
+    -1.2, -4,
+    1.2, -4,
+    1.5, -3.5,
+    1.5, -3,
+    1, -1,
+    // Cockpit (18)
+    -0.6, 2,
+    0.6, 2,
+    // Bumpers (20)
+    3, 2,
+    3.5, 0,
+    -3, 2,
+    -3.5, 0,
+    // Engines (24)
+    -3.25, -2.2,
+    -3.33, -3.5,
+    -1.5, -3.7,
+    1.5, -3.7,
+    3.33, -3.5,
+    3.25, -2.2
 };
 
-/*static vec2 thruster_locations[4] = {
-    {.5, 2},
-    {-.5, 2},
-    {-.5, -2},
-    {.5, -2}
-};*/
+#define NUM_BODY (32*2)
+static unsigned short ship_indices[NUM_BODY] = {
+    0, 1,
+    1, 2,
+    2, 3,
+    3, 4,
+    5, 6,
+    6, 7,
+    7, 8,
+    8, 9,
+    9, 0,
+    10, 11,
+    11, 12,
+    12, 13,
+    13, 14,
+    14, 15,
+    15, 16,
+    16, 17,
+    17, 10,
+    10, 18,
+    18, 19,
+    19, 17,
+    1, 20,
+    20, 21,
+    21, 2,
+    8, 22,
+    22, 23,
+    23, 7,
+    24, 25,
+    25, 26,
+    27, 28,
+    28, 29
+};
 
 void input_physics(struct rocket *s) {
     // Enable stabilization, fire opposite rotation
@@ -100,7 +153,7 @@ void draw_rocket(const struct rocket *s) {
     glRotatef(-s->rbody.angle, 0, 0, 1);
 
     // Draw the main rocket
-    glDrawArrays(GL_LINE_LOOP, 0, NUM_BODY);
+    glDrawElements(GL_LINES, NUM_BODY, GL_UNSIGNED_SHORT, ship_indices);
 
     // Maneuvering thrusters
     // Draw the RCS jets if the rotation controls are enabled
@@ -137,7 +190,28 @@ void draw_rocket(const struct rocket *s) {
 
     // Linear thruster
     if (s->main_fuel > 0 && s->input.y > 0) {
-        glDrawArrays(GL_LINE_STRIP, THRUST_START, NUM_THRUST);
+        int i;
+        vec2 origin = s->rbody.pos;
+        vec2 backwards = v2angle(s->rbody.angle+180);
+        v2muli(&backwards, 0.1);
+        v2inc(&origin, &backwards);
+//        vec2 time_offset = rb_point_velocity(&s->rbody, &origin);
+
+        for (i = 0; i < 16; i++) {
+//            double time = 64.0/i;
+
+            vec2 vector = v2angle(s->rbody.angle+180+randf()*SPREAD);
+            v2muli(&vector, 0.02);
+            v2inc(&vector, &s->rbody.vel);
+
+            vec2 disk = v2angle(randf()*180);
+            v2muli(&disk, 0.01);
+            vec2 origin2 = origin;
+  //          vec2 delta = v2mul(&time_offset, time);
+//            v2inc(&origin2, &delta);
+            v2inc(&origin2, &disk);
+            emit(s->main_particles, &origin2, &vector);
+        }
     }
 
     // Back to global space for rendering
