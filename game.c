@@ -29,7 +29,7 @@ void cleanup() {
 
 void draw_bg();
 
-#define GRID_SIZE 200
+#define GRID_SIZE 10
 #define GRID_SCALE 0.5
 vec2f *bg;
 
@@ -73,7 +73,7 @@ int main(int argc, const char **argv) {
 
     // Initialize the particle system for the rocket
     // and the rocket itself
-    struct particle_system *rcs_ps = new_particle_system(512);
+    struct particle_system *rcs_ps = new_particle_system(512+256);
     if (rcs_ps == NULL) return EXIT_FAILURE;
     struct particle_system *main_ps = new_particle_system(2048);
     if (main_ps == NULL) return EXIT_FAILURE;
@@ -114,8 +114,8 @@ int main(int argc, const char **argv) {
         update_particles(main_ps);
         update_camera(&cam, &ship);
 
+        draw_bg(&cam);
         camera_start(&cam);
-        draw_bg();
         draw_rocket(&ship);
         draw_particles(rcs_ps);
         draw_particles(main_ps);
@@ -134,10 +134,15 @@ int main(int argc, const char **argv) {
     return EXIT_SUCCESS;
 }
 
-void draw_bg() {
+void draw_bg(struct camera *cam) {
+    glPushMatrix();
+    double dx = fmod(cam->pos.x, 1.0);
+    double dy = fmod(cam->pos.y, 1.0);
+    glTranslatef(dx, dy, 0);
     glPointSize(4);
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(2, GL_FLOAT, 0, bg);
 
     glDrawArrays(GL_POINTS, 0, GRID_SIZE*GRID_SIZE);
+    glPopMatrix();
 }

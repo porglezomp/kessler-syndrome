@@ -9,25 +9,20 @@
 #include <math.h>
 #include <stdio.h>
 
-// Offsets and lengths in the ship mesh
-//#define START_BODY 0
-//#define NUM_THRUST 3
-//#define THRUST_START  4
-
 // Parameters for emitting RCS particles
 #define SPREAD 10 // degrees
-#define NUM_PARTICLES 8
+#define NUM_PARTICLES 12
 #define DISK_RADIUS 0.01
 #define PARTICLE_VEL 0.02
 
 struct rocket new_rocket() {
     struct rigidbody rbody = {
         .mass=100000,
-        .moment_inertia=5
+        .moment_inertia=25
     };
     struct rocket r = {
         .scale=.03,
-        .angle_force=0.5,
+        .angle_force=2.5,
         .thrust=30,
         .max_rcs_fuel=100,
         .rcs_fuel=100,
@@ -51,7 +46,6 @@ void all_rcs(struct rocket *r) {
     int i;
     for (i = 0; i < NUM_THRUSTERS; i++) {
         if ((1<<i) & r->active_thrusters) {
-            printf("%i\n", i);
             fire_rcs(r, i, 1);
         }
     }
@@ -128,7 +122,10 @@ void draw_rcs(const struct rocket *s, int index) {
    }
 }
 
+vec2 main_thruster_points[2];
 void draw_rocket(const struct rocket *s) {
+    int i;
+
     // Perform rocket transforms
     glPushMatrix();
     glTranslatef(s->rbody.pos.x, s->rbody.pos.y, 0);
@@ -144,39 +141,58 @@ void draw_rocket(const struct rocket *s) {
     // Draw the RCS jets if the rotation controls are enabled
     // Particle emission
     if (s->rcs_fuel > 0 && s->firing_thrusters != 0) {
-
-        int index;
-        for (index = 0; index < NUM_THRUSTERS; index++) {
+        for (i = 0; i < NUM_THRUSTERS; i++) {
             // If the index is in the set of firing thrusters, draw it
-            if ((1<<index) & s->firing_thrusters) {
-                draw_rcs(s, index);
+            if ((1<<i) & s->firing_thrusters) {
+                draw_rcs(s, i);
             }
         }
     }
 
+    glPushMatrix();
+
+    glColor4f(1, 1, 1, 1);
+    double scale = 1/s->scale;
+    glScalef(scale, scale, scale);
+    vec2f temp_points[NUM_THRUSTERS];
+    for (i = 0; i < NUM_THRUSTERS; i++) {
+        temp_points[i] = v2tov2f(&rcs_points[i]);
+    }
+    glVertexPointer(2, GL_FLOAT, 0, temp_points);
+    glPointSize(8);
+
+    for (i = 0; i < NUM_THRUSTERS; i++) {
+        if ((1<<i) & s->active_thrusters) {
+            glDrawArrays(GL_POINTS, i, 1);
+        }
+    }
+    glPopMatrix();
+
     // Linear thruster
     if (s->main_fuel > 0 && s->input.y > 0) {
-        int i;
-        vec2 origin = s->rbody.pos;
-        vec2 backwards = v2angle(s->rbody.angle+180);
-        v2muli(&backwards, 0.1);
-        v2inc(&origin, &backwards);
-//        vec2 time_offset = rb_point_velocity(&s->rbody, &origin);
+        // Transform the origins of the thrusters into global coords
+        vec2 thruster1 = main_thruster_points[0];
+        vec2 thruster2 = main_thruster_points[1];
+        v2roti(&thruster1, s->rbody.angle);
+        v2roti(&thruster2, s->rbody.angle);
+        v2inc(&thruster1, &s->rbody.pos);
+        v2inc(&thruster2, &s->rbody.pos);
 
+        // We emit multiple particles each frame that the thruster is firing
         for (i = 0; i < 16; i++) {
-//            double time = 64.0/i;
-
+            // Generate the direction to fire the particle
             vec2 vector = v2angle(s->rbody.angle+180+randf()*SPREAD);
-            v2muli(&vector, 0.02);
+            v2muli(&vector, 0.03);
             v2inc(&vector, &s->rbody.vel);
 
+            // Distribute the particles over a disk to avoid artifacts
             vec2 disk = v2angle(randf()*180);
             v2muli(&disk, 0.01);
-            vec2 origin2 = origin;
-  //          vec2 delta = v2mul(&time_offset, time);
-//            v2inc(&origin2, &delta);
-            v2inc(&origin2, &disk);
-            emit(s->main_particles, &origin2, &vector);
+            // Alternate emitting particles on the left and right
+            if (i%2 == 0) v2inc(&disk, &thruster1);
+            else v2inc(&disk, &thruster2);
+            // Emit the particle using the generated vectors
+            emit(s->main_particles, &disk, &vector);
         }
     }
 
@@ -184,15 +200,20 @@ void draw_rocket(const struct rocket *s) {
     glPopMatrix();
 }
 
+vec2 main_thruster_points[2] = {
+    {0.07, -0.1},
+    {-0.07, -0.1}
+};
+
 vec2 rcs_points[NUM_THRUSTERS] = {
-    {0.04, 0.08},
-    {-0.04, 0.08},
-    {0.04, -0.08},
-    {-0.04, -0.08},
-    {0.03, 0.09},
-    {-0.03, 0.09},
-    {0.03, -0.09},
-    {-0.03, -0.09},
+    {0.05, 0.08},
+    {-0.05, 0.08},
+    {0.05, -0.08},
+    {-0.05, -0.08},
+    {0.04, 0.09},
+    {-0.04, 0.09},
+    {0.05, -0.09},
+    {-0.05, -0.09},
 };
 
 float rcs_angles[NUM_THRUSTERS] = { 90, -90, 90, -90, 0, 0, 180, 180 };
