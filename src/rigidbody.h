@@ -3,10 +3,13 @@
 
 #include "vec2.h"
 
+struct collider;
+
 struct rigidbody {
-    vec2 pos, vel, force;
-    double angle, angle_vel, torque;
-    double mass, moment_inertia;
+  vec2 pos, vel, force;
+  double angle, angle_vel, torque;
+  double mass, moment_inertia;
+  struct collider *col;
 };
 
 void update_rigidbody(struct rigidbody*);

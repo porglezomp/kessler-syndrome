@@ -25,6 +25,7 @@ void emit(struct particle_system *ps, const vec2 *pos, const vec2 *vel);
 void update_particles(struct particle_system *ps);
 void draw_particles(struct particle_system *ps);
 void kill_particle(struct particle_system *ps);
+void kill_particles(struct particle_system *ps, int num_to_kill);
 
 void free_particle_system(struct particle_system *ps);
 

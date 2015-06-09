@@ -42,7 +42,8 @@ int main(int argc, const char **argv) {
     int x, y;
     for (y = 0; y < GRID_SIZE; y++) {
         for (x = 0; x < GRID_SIZE; x++) {
-            bg[y*GRID_SIZE+x] = (vec2f) {(x-GRID_SIZE/2)*GRID_SCALE, (y-GRID_SIZE/2)*GRID_SCALE};
+            bg[y*GRID_SIZE+x] = (vec2f) {(x-GRID_SIZE/2)*GRID_SCALE,
+					 (y-GRID_SIZE/2)*GRID_SCALE};
         }
     }
 
@@ -64,11 +65,10 @@ int main(int argc, const char **argv) {
     // Load our handler for ^C, should only quit
     signal(SIGINT, handle_interrupt);
     if (argc <= 1) {
-    atexit(cleanup);
+      atexit(cleanup);
     }
 
-    // Setup the input handler using the default input device
-    // (default is "/dev/input/event1")
+    // Setup the input handler, easyinput will try to find the right device
     ei_setup(NULL);
 
     // Initialize the particle system for the rocket
@@ -131,6 +131,7 @@ int main(int argc, const char **argv) {
     free_particle_system(rcs_ps);
     free_particle_system(main_ps);
     free(bg);
+    ei_teardown();
     return EXIT_SUCCESS;
 }
 
@@ -138,7 +139,8 @@ void draw_bg(struct camera *cam) {
     glPushMatrix();
     double dx = fmod(cam->pos.x, 1.0);
     double dy = fmod(cam->pos.y, 1.0);
-    glTranslatef(dx, dy, 0);
+    // Translate negative because we're moving the world, not the objects
+    glTranslatef(-dx, -dy, 0);
     glPointSize(4);
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(2, GL_FLOAT, 0, bg);

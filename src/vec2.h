@@ -35,8 +35,8 @@ vec2 v2add(const vec2 *lhs, const vec2 *rhs); // +
 void v2inc(vec2 *lhs, const vec2 *rhs);       // +=
 vec2 v2sub(const vec2 *lhs, const vec2 *rhs); // -
 void v2dec(vec2 *lhs, const vec2 *rhs);       // -=
-vec2 v2mul(const vec2 *vec, double s);         // *
-void v2muli(vec2 *vec, double s);              // *=
+vec2 v2mul(const vec2 *vec, double s);        // *
+void v2muli(vec2 *vec, double s);             // *=
 
 // Arithmetic for vec2f (float)
 void v2finc(vec2f*, const vec2f*);

@@ -15,6 +15,7 @@ struct particle_system *new_particle_system(int nparticles) {
         free(ps);
         return NULL;
     }
+    // Default particle animation properties
     ps->nparticles = nparticles;
     ps->particles = particles;
     ps->offset = 0;
@@ -27,22 +28,25 @@ struct particle_system *new_particle_system(int nparticles) {
 }
 
 struct particle *nth_particle(struct particle_system *ps, int n) {
-    int offset = (ps->offset + n) % ps->nparticles;
-    return &ps->particles[offset];
+  // return the nth particle in the ring buffer, based on the offset
+  int offset = (ps->offset + n) % ps->nparticles;
+  return &ps->particles[offset];
 }
 
 void emit(struct particle_system *ps, const vec2 *pos, const vec2 *vel) {
+    int n = ps->count;
     if (ps->count < ps->nparticles) {
         ps->count += 1;
     } else {
+        // If the buffer is saturated, move the offset over one
+        // (Removes the first and adds a new last)
         ps->offset = (ps->offset + 1) % ps->nparticles;
     }
     struct particle p = {.pos=v2tov2f(pos), .vel=v2tov2f(vel), .life=ps->life,
                          .r=0, .g=0, .b=0, .a=1, .radius=5};
-    *nth_particle(ps, ps->count) = p;
+    *nth_particle(ps, n) = p;
 }
 
-#define MAX_SHORT (1<<16)
 void update_particles(struct particle_system *ps) {
     int to_remove = 0;
     for (int i = 0; i < ps->count; i++) {
@@ -61,7 +65,7 @@ void update_particles(struct particle_system *ps) {
         if (nth->life <= 0) to_remove += 1;
     }
     // Remove all of the dead particles
-    for (int i = 0; i < to_remove; i++) kill_particle(ps);
+    kill_particles(ps, to_remove);
 }
 
 void draw_particles(struct particle_system *ps) {
@@ -74,10 +78,12 @@ void draw_particles(struct particle_system *ps) {
 
     int drawcount = ps->count;
     if (ps->offset + ps->count >= ps->nparticles) {
+        // Particles: [* * * * * . . . . . . . + + + + + + + +]
+        // This part draws the *s
         drawcount = ps->nparticles - ps->offset;
         glDrawArrays(GL_POINTS, 0, ps->count - drawcount);
     }
-
+    
     glDrawArrays(GL_POINTS, ps->offset, drawcount);
 
     glDisableClientState(GL_COLOR_ARRAY);
@@ -85,10 +91,22 @@ void draw_particles(struct particle_system *ps) {
 }
 
 void kill_particle(struct particle_system *ps) {
+    // Remove from the front of the buffer, since that's the oldest particle
     if (ps->count > 0) {
         ps->count -= 1;
         ps->offset = (ps->offset + 1) % ps->nparticles;
     }
+}
+
+void kill_particles(struct particle_system *ps, int n) {
+  // Remove n particles from the front of the buffer
+  // If there are less than n particles in the buffer, remove them all
+  if (ps->count >= n) {
+    ps->count -= n;
+    ps->offset = (ps->offset + n) % ps->nparticles;
+  } else {
+    ps->count = ps->offset = 0;
+  }
 }
 
 void free_particle_system(struct particle_system *ps) {

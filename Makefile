@@ -1,16 +1,19 @@
 LIBS = $(shell pkg-config PiGL --libs) -lm -leasyinput
 # Use -MMD to generate dependency files
 CFLAGS = $(shell pkg-config PiGL --cflags) --std=gnu99 -fgnu89-inline -g -Wall -Werror -MMD
-SRCS = game.c vec2.c rocket.c particles.c space.c gui.c rigidbody.c camera.c
-OBJS = $(SRCS:%.c=%.o)
-DEPS = $(SRCS:%.c=%.d)
+SRCS = $(shell echo src/*.c)
+OBJS = $(SRCS:src/%.c=build/%.o)
+DEPS = $(SRCS:src/%.c=build/%.d)
 APP = Game.out
 
-$(APP): $(OBJS)
+$(APP): directories $(OBJS)
 	gcc -o $(APP) $(OBJS) $(LIBS) $(CFLAGS)
 
-%.o: %.c
-	gcc -c $< $(CFLAGS)
+build/%.o: src/%.c
+	gcc -c $< $(CFLAGS) -o $@
+
+directories:
+	mkdir -p build
 
 clean:
 	rm -f $(OBJS)
@@ -19,7 +22,7 @@ clean:
 
 test: test/Test.out
 
-test/Test.out: test/test.c vec2.o
+test/Test.out: test/test.c build/vec2.o
 	gcc -o test/Test.out -I./ test/test.c vec2.o -lm
 	./test/Test.out
 
