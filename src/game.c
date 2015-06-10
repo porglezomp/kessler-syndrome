@@ -69,7 +69,7 @@ int main(int argc, const char **argv) {
     }
 
     // Setup the input handler, easyinput will try to find the right device
-    ei_setup(NULL);
+    ei_init(NULL);
 
     // Initialize the particle system for the rocket
     // and the rocket itself
@@ -131,7 +131,7 @@ int main(int argc, const char **argv) {
     free_particle_system(rcs_ps);
     free_particle_system(main_ps);
     free(bg);
-    ei_teardown();
+    ei_quit();
     return EXIT_SUCCESS;
 }
 

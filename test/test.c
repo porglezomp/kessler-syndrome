@@ -1,4 +1,4 @@
-#include "../vec2.h"
+#include "../src/vec2.h"
 
 #include <stdio.h>
 
