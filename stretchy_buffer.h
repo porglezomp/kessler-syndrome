@@ -182,7 +182,7 @@
 #define stb_sb_add(a,n)        (stb__sbmaybegrow(a,n), stb__sbn(a)+=(n), &(a)[stb__sbn(a)-(n)])
 #define stb_sb_last(a)         ((a)[stb__sbn(a)-1])
 #define stb_sb_pop(a)          (--stb__sbn(a))
-#define stb_sb_remove(a,n)     (stb__sbremf((a), (n), sizeof(*(a))))
+#define stb_sb_remove(a,n)     (stb__sbremvf((a), (n), sizeof(*(a))))
 #define stb_sb_remove_swap(a,n) ((void) (((n)==--stb__sbn(a)) ? 0 : ((a)[n]=(a)[stb__sbn(a)], 0)))
 
 
@@ -216,7 +216,8 @@ static void * stb__sbgrowf(void *arr, int increment, int itemsize)
    }
 }
 
-static void stb__sbremf(void *arr, int index, int itemsize)
+static void stb__sbremvf(void*, int, int) __attribute__ ((unused));
+static void stb__sbremvf(void *arr, int index, int itemsize)
 {
   int n = --stb__sbn(arr);
   int num_to_move = n - index;

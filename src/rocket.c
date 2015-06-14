@@ -14,12 +14,22 @@
 #define NUM_PARTICLES 12
 #define DISK_RADIUS 0.01
 #define PARTICLE_VEL 0.02
+#define log(x) {FILE *fd = fopen("game.log", "a"); fputs(x, fd); fclose(fd);}
+#define logf(...) {FILE *fd = fopen("game.log", "a"); fprintf(fd, __VA_ARGS__); fclose(fd);}
 
 struct rocket new_rocket() {
     struct rigidbody rbody = {
         .mass=100000,
         .moment_inertia=25
     };
+    ksl_mesh_list *mesh_list = ksl_load_meshes("mesh/rocket.ksl", NULL);
+    if (mesh_list == NULL) {
+      log(ksl_get_error());
+      log("\n");
+      exit(1);
+    }
+    ksl_mesh_handle mesh = ksl_make_handle(mesh_list->meshes[0]);
+    ksl_free_mesh_list(mesh_list);
     struct rocket r = {
         .scale=.03,
         .angle_force=2.5,
@@ -30,13 +40,11 @@ struct rocket new_rocket() {
         .max_main_fuel=3000,
         .main_fuel=3000,
         .main_fuel_rate=0.3,
-        .rbody=rbody
+        .rbody=rbody,
+	.mesh=mesh
     };
     return r;
 }
-
-// Store the (rather large) mesh definitions in a seperate file
-#include "mesh.h"
 
 void toggle_thruster(struct rocket *r, int index) {
     r->active_thrusters ^= 1<<index;
@@ -125,17 +133,26 @@ void draw_rcs(const struct rocket *s, int index) {
 vec2 main_thruster_points[2];
 void draw_rocket(const struct rocket *s) {
     int i;
-
+    ksl_mesh *mesh = s->mesh.shared_mesh;
+    
     // Perform rocket transforms
     glPushMatrix();
     glTranslatef(s->rbody.pos.x, s->rbody.pos.y, 0);
-    glScalef(s->scale, s->scale, s->scale);
+    double scale = s->scale;
+    glScalef(scale, scale, scale);
     glRotatef(-s->rbody.angle, 0, 0, 1);
+
+    // Move to integer units using mesh scale
+    glPushMatrix();
+    scale = 1.0 / mesh->meter_size;
+    glScalef(scale, scale, scale);
 
     // Draw the main rocket
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, ship_mesh);
-    glDrawElements(GL_LINES, NUM_BODY, GL_UNSIGNED_SHORT, ship_indices);
+    glVertexPointer(2, GL_SHORT, 0, mesh->verts);
+    glDrawElements(GL_LINES, mesh->line_count*2, GL_UNSIGNED_SHORT, mesh->lines);
+
+    glPopMatrix();
 
     // Maneuvering thrusters
     // Draw the RCS jets if the rotation controls are enabled
@@ -152,7 +169,7 @@ void draw_rocket(const struct rocket *s) {
     glPushMatrix();
 
     glColor4f(1, 1, 1, 1);
-    double scale = 1/s->scale;
+    scale = 1/s->scale;
     glScalef(scale, scale, scale);
     vec2f temp_points[NUM_THRUSTERS];
     for (i = 0; i < NUM_THRUSTERS; i++) {

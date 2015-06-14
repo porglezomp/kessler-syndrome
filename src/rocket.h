@@ -3,6 +3,7 @@
 
 #include "rigidbody.h"
 #include "vec2.h"
+#include "kslmesh.h"
 
 #define NUM_THRUSTERS 8
 #define THRUSTER(n) (1<<(n-1))
@@ -17,6 +18,7 @@ struct rocket {
     float angle_force, thrust, max_rcs_fuel,
           max_main_fuel, rcs_fuel, main_fuel,
           rcs_fuel_rate, main_fuel_rate, scale;
+    ksl_mesh_handle mesh;
     int damping, active_thrusters, firing_thrusters;
     struct particle_system *rcs_particles, *main_particles;
 };

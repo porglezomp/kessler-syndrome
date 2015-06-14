@@ -1,5 +1,5 @@
-LIBS = $(shell pkg-config PiGL --libs) -lm -leasyinput
-NODEPS = $(shell pkg-config PiGL --cflags) --std=gnu99 -fgnu89-inline -g -Wall -Werror
+LIBS = $(shell pkg-config PiGL --libs) -lm -leasyinput -lkslmesh
+NODEPS = $(shell pkg-config PiGL --cflags) --std=gnu99 -fgnu89-inline -g -Wall -Werror -Wextra -I./
 # Use -MMD to generate dependency files
 CFLAGS = $(NODEPS) -MMD
 ODIR = build
@@ -32,8 +32,8 @@ test/Test.out: test/test.c build/vec2.o
 
 tools: $(TOOLS)
 
-tools/MeshEdit.out: tools/meshedit.c build/vec2.o src/vec2.h stretchy_buffer.h
-	gcc build/vec2.o tools/meshedit.c -o tools/MeshEdit.out $(NODEPS) $(LIBS)
+tools/MeshEdit.out: tools/meshedit.c build/vec2.o src/vec2.h stretchy_buffer.h tools/meshedit.h tools/meshedit_io.c
+	gcc build/vec2.o tools/meshedit.c tools/meshedit_io.c -o tools/MeshEdit.out $(NODEPS) $(LIBS)
 
 # Include the generated dependency files for smarter rebuilds
 -include $(DEPS)

@@ -20,11 +20,8 @@
 
 static volatile int running = 1;
 void handle_interrupt(int dummy) {
-    running = 0;
-}
-
-void cleanup() {
-    printf("\033[H\033[2J");
+  (void) dummy; // Ignore dummy
+  running = 0;
 }
 
 void draw_bg();
@@ -33,12 +30,13 @@ void draw_bg();
 #define GRID_SCALE 0.5
 vec2f *bg;
 
-int main(int argc, const char **argv) {
+//int main(int argc, const char **argv) {
+int main() {
     // Initialize the OpenGL context and framebuffer
     OGL_Init();
     atexit(OGL_Quit);
 
-    bg = calloc(GRID_SIZE*GRID_SIZE, sizeof(vec2f));
+    bg = (vec2f *) calloc(GRID_SIZE*GRID_SIZE, sizeof(vec2f));
     int x, y;
     for (y = 0; y < GRID_SIZE; y++) {
         for (x = 0; x < GRID_SIZE; x++) {
@@ -64,9 +62,6 @@ int main(int argc, const char **argv) {
 
     // Load our handler for ^C, should only quit
     signal(SIGINT, handle_interrupt);
-    if (argc <= 1) {
-      atexit(cleanup);
-    }
 
     // Setup the input handler, easyinput will try to find the right device
     ei_init(NULL);
