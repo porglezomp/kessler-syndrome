@@ -8,6 +8,7 @@
 #include "easyinput.h"
 #include "PiGL.h"
 #include "GLES/gl.h"
+#include "kslfont.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -66,12 +67,19 @@ int main() {
     // Setup the input handler, easyinput will try to find the right device
     ei_init(NULL);
 
+    ksl_font *font = ksl_load_font("mesh/font.ksl");
+    if (font == NULL) {
+      fprintf(stderr, "%s\n", ksl_get_error());
+      exit(1);
+    }
+
     // Initialize the particle system for the rocket
     // and the rocket itself
     struct particle_system *rcs_ps = new_particle_system(512+256);
     if (rcs_ps == NULL) return EXIT_FAILURE;
     struct particle_system *main_ps = new_particle_system(2048);
     if (main_ps == NULL) return EXIT_FAILURE;
+
     main_ps->life = 5;
     main_ps->growth = 1;
 
@@ -84,6 +92,11 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
         ei_frame_start();
         ei_poll_all();
+
+	glPushMatrix();
+	glLoadIdentity();
+	ksl_draw_string(font, 0, 0, "w");
+	glPopMatrix();
 
         ship.input = v2zero, ship.damping = 0, ship.firing_thrusters = 0;
         if (ei_key_down(KEY_UP))    ship.input.y += 1;

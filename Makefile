@@ -1,5 +1,5 @@
-LIBS = $(shell pkg-config PiGL --libs) -lm -leasyinput -lkslmesh
-NODEPS = $(shell pkg-config PiGL --cflags) --std=gnu99 -fgnu89-inline -g -Wall -Werror -Wextra -I./
+LIBS = $(shell pkg-config PiGL --libs) -lm -leasyinput -lkslmesh -lkslfont $(shell pkg-config kslmesh_gl --libs)
+NODEPS = $(shell pkg-config PiGL --cflags) --std=gnu99 -fgnu89-inline -g -Wall -Werror -Wextra -I./ $(shell pkg-config kslmesh_gl --cflags)
 # Use -MMD to generate dependency files
 CFLAGS = $(NODEPS) -MMD
 ODIR = build

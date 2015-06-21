@@ -28,7 +28,9 @@ struct rocket new_rocket() {
       log("\n");
       exit(1);
     }
-    ksl_mesh_handle mesh = ksl_make_handle(mesh_list->meshes[0]);
+    ksl_gl_mesh *glmesh = ksl_make_gl_mesh(mesh_list->meshes[0]);
+    ksl_gl_mesh_handle mesh = ksl_make_gl_handle(glmesh);
+    ksl_release_gl_mesh(glmesh);
     ksl_free_mesh_list(mesh_list);
     struct rocket r = {
         .scale=.03,
@@ -133,7 +135,6 @@ void draw_rcs(const struct rocket *s, int index) {
 vec2 main_thruster_points[2];
 void draw_rocket(const struct rocket *s) {
     int i;
-    ksl_mesh *mesh = s->mesh.shared_mesh;
     
     // Perform rocket transforms
     glPushMatrix();
@@ -142,17 +143,19 @@ void draw_rocket(const struct rocket *s) {
     glScalef(scale, scale, scale);
     glRotatef(-s->rbody.angle, 0, 0, 1);
 
-    // Move to integer units using mesh scale
-    glPushMatrix();
-    scale = 1.0 / mesh->meter_size;
-    glScalef(scale, scale, scale);
+    /* // Move to integer units using mesh scale */
+    /* glPushMatrix(); */
+    /* scale = 1.0 / mesh->meter_size; */
+    /* glScalef(scale, scale, scale); */
 
-    // Draw the main rocket
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_SHORT, 0, mesh->verts);
-    glDrawElements(GL_LINES, mesh->line_count*2, GL_UNSIGNED_SHORT, mesh->lines);
+    /* // Draw the main rocket */
+    /* glEnableClientState(GL_VERTEX_ARRAY); */
+    /* glVertexPointer(2, GL_SHORT, 0, mesh->verts); */
+    /* glDrawElements(GL_LINES, mesh->line_count*2, GL_UNSIGNED_SHORT, mesh->lines); */
 
-    glPopMatrix();
+    /* glPopMatrix(); */
+
+    ksl_draw_gl_mesh(s->mesh.shared_mesh);
 
     // Maneuvering thrusters
     // Draw the RCS jets if the rotation controls are enabled
